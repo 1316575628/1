@@ -1,0 +1,59 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 日志和数据库
+logs/
+*.log
+*.db
+*.sqlite
+*.sqlite3
+
+# 上传文件
+uploads/
+
+# 临时文件
+tmp/
+temp/
+
+# 测试文件
+tests/
+.pytest_cache/
+.coverage
+
+# 文档
+*.md
+docs/
+
+# 环境文件
+.env
+.env.local
+.env.production
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+.dockerignore

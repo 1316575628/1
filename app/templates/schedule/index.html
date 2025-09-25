@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+
+{% block title %}排班管理 - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="fw-bold text-primary">
+                <i class="bi bi-calendar3 me-2"></i>排班管理
+            </h2>
+            <p class="text-muted">管理员工排班信息</p>
+        </div>
+        <div class="col-auto">
+            <div class="d-flex gap-2">
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('schedule.batch_create') }}" class="btn btn-outline-success">
+                    <i class="bi bi-calendar-plus me-1"></i>批量创建
+                </a>
+                {% endif %}
+                <a href="{{ url_for('schedule.create') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>创建排班
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filter Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="filter-user" class="form-label">用户</label>
+                    <select class="form-select" id="filter-user">
+                        <option value="">所有用户</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="filter-start-date" class="form-label">开始日期</label>
+                    <input type="date" class="form-control" id="filter-start-date">
+                </div>
+                <div class="col-md-3">
+                    <label for="filter-end-date" class="form-label">结束日期</label>
+                    <input type="date" class="form-control" id="filter-end-date">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="button" class="btn btn-outline-primary me-2" onclick="loadSchedules()">
+                        <i class="bi bi-search me-1"></i>搜索
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                        <i class="bi bi-x-circle me-1"></i>清除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Schedule Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold text-primary">
+                    <i class="bi bi-table me-2"></i>排班列表
+                </h5>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-info btn-sm" onclick="exportSchedules()">
+                        <i class="bi bi-download me-1"></i>导出
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshTable()">
+                        <i class="bi bi-arrow-clockwise me-1"></i>刷新
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="schedules-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 120px;">用户</th>
+                            <th style="width: 120px;">日期</th>
+                            <th style="width: 100px;">班次</th>
+                            <th style="width: 150px;">时间</th>
+                            <th style="width: 80px;">状态</th>
+                            <th>备注</th>
+                            <th style="width: 120px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedules-tbody">
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">加载中...</span>
+                                </div>
+                                <p class="mt-2 text-muted">加载中...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <nav aria-label="排班分页">
+                <ul class="pagination justify-content-center mt-3" id="pagination">
+                    <!-- 分页内容将通过JavaScript动态生成 -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">确认删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除这条排班记录吗？此操作无法撤销。</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">删除</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+let currentDeleteId = null;
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadUsers();
+    loadSchedules();
+    
+    // 删除确认模态框事件
+    const deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        currentDeleteId = button.getAttribute('data-id');
+    });
+    
+    document.getElementById('confirmDelete').addEventListener('click', function() {
+        if (currentDeleteId) {
+            deleteSchedule(currentDeleteId);
+        }
+    });
+});
+
+// 加载用户列表
+async function loadUsers() {
+    try {
+        const response = await Utils.request('/api/users');
+        if (response.success) {
+            const userSelect = document.getElementById('filter-user');
+            response.data.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = user.username;
+                userSelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('加载用户列表失败:', error);
+    }
+}
+
+// 加载排班列表
+async function loadSchedules(page = 1) {
+    try {
+        currentPage = page;
+        
+        const params = new URLSearchParams({
+            page: page,
+            per_page: 20
+        });
+        
+        // 添加筛选条件
+        const userId = document.getElementById('filter-user').value;
+        const startDate = document.getElementById('filter-start-date').value;
+        const endDate = document.getElementById('filter-end-date').value;
+        
+        if (userId) params.append('user_id', userId);
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        
+        const response = await Utils.request(`/schedule/list?${params}`);
+        
+        if (response.success) {
+            renderSchedules(response.data.schedules);
+            renderPagination(response.data.pagination);
+        } else {
+            Utils.showErrorToast(response.message || '加载排班列表失败');
+        }
+    } catch (error) {
+        console.error('加载排班列表失败:', error);
+        Utils.showErrorToast('加载排班列表失败');
+    }
+}
+
+// 渲染排班列表
+function renderSchedules(schedules) {
+    const tbody = document.getElementById('schedules-tbody');
+    
+    if (schedules.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center py-4">
+                    <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-3">暂无排班记录</p>
+                    <a href="{{ url_for('schedule.create') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>创建排班
+                    </a>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = schedules.map(schedule => `
+        <tr class="fade-in">
+            <td>
+                <i class="bi bi-person-circle me-2"></i>
+                ${schedule.user_name || '未知用户'}
+            </td>
+            <td>
+                <i class="bi bi-calendar-date me-1"></i>
+                ${Utils.formatDate(schedule.work_date)}
+            </td>
+            <td>
+                ${schedule.is_rest_day ? 
+                    '<span class="badge bg-secondary">休息</span>' :
+                    `<span class="badge" style="background-color: ${schedule.shift_info ? schedule.shift_info.color : '#6c757d'}">
+                        ${schedule.shift_info ? schedule.shift_info.name : '未知班次'}
+                    </span>`
+                }
+            </td>
+            <td>
+                ${schedule.is_rest_day || !schedule.shift_info ? 
+                    '<span class="text-muted">--:-- -- --:--</span>' :
+                    `${schedule.shift_info.start_time} - ${schedule.shift_info.end_time}`
+                }
+            </td>
+            <td>
+                ${schedule.is_rest_day ? 
+                    '<span class="badge bg-success">休息</span>' :
+                    '<span class="badge bg-primary">工作</span>'
+                }
+            </td>
+            <td class="small text-muted">
+                ${schedule.note ? schedule.note.substring(0, 50) + (schedule.note.length > 50 ? '...' : '') : '-'}
+            </td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <a href="/schedule/${schedule.id}/edit" class="btn btn-outline-primary btn-sm" title="编辑">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <button type="button" class="btn btn-outline-danger btn-sm" 
+                            data-bs-toggle="modal" data-bs-target="#deleteModal" 
+                            data-id="${schedule.id}" title="删除">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// 渲染分页
+function renderPagination(pagination) {
+    const paginationElement = document.getElementById('pagination');
+    
+    if (pagination.pages <= 1) {
+        paginationElement.innerHTML = '';
+        return;
+    }
+    
+    let html = '';
+    
+    // 上一页
+    if (pagination.has_prev) {
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="loadSchedules(${pagination.prev_num})">上一页</a></li>`;
+    } else {
+        html += '<li class="page-item disabled"><span class="page-link">上一页</span></li>';
+    }
+    
+    // 页码
+    for (let i = 1; i <= pagination.pages; i++) {
+        if (i === pagination.page) {
+            html += `<li class="page-item active"><span class="page-link">${i}</span></li>`;
+        } else if (Math.abs(i - pagination.page) <= 2 || i === 1 || i === pagination.pages) {
+            html += `<li class="page-item"><a class="page-link" href="#" onclick="loadSchedules(${i})">${i}</a></li>`;
+        } else if (Math.abs(i - pagination.page) === 3) {
+            html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        }
+    }
+    
+    // 下一页
+    if (pagination.has_next) {
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="loadSchedules(${pagination.next_num})">下一页</a></li>`;
+    } else {
+        html += '<li class="page-item disabled"><span class="page-link">下一页</span></li>';
+    }
+    
+    paginationElement.innerHTML = html;
+}
+
+// 删除排班
+async function deleteSchedule(id) {
+    try {
+        const response = await Utils.request(`/schedule/${id}/delete`, {
+            method: 'POST'
+        });
+        
+        if (response.success) {
+            Utils.showSuccessToast('排班删除成功');
+            loadSchedules(currentPage);
+        } else {
+            Utils.showErrorToast(response.message || '删除排班失败');
+        }
+    } catch (error) {
+        console.error('删除排班失败:', error);
+        Utils.showErrorToast('删除排班失败');
+    }
+    
+    // 关闭模态框
+    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+    modal.hide();
+}
+
+// 清除筛选条件
+function clearFilters() {
+    document.getElementById('filter-user').value = '';
+    document.getElementById('filter-start-date').value = '';
+    document.getElementById('filter-end-date').value = '';
+    loadSchedules(1);
+}
+
+// 刷新表格
+function refreshTable() {
+    loadSchedules(currentPage);
+    Utils.showSuccessToast('表格已刷新');
+}
+
+// 导出排班数据
+function exportSchedules() {
+    Utils.showToast('导出功能开发中，敬请期待', 'info');
+}
+</script>
+{% endblock %}

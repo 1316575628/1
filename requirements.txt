@@ -1,0 +1,44 @@
+# Flask Web框架
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Flask-Login==0.6.3
+Flask-Migrate==4.0.5
+Flask-WTF==1.1.1
+
+# 数据库
+SQLAlchemy==2.0.21
+
+# 表单验证
+WTForms==3.0.1
+
+# 密码哈希
+Werkzeug==2.3.7
+
+# HTTP请求
+requests==2.31.0
+
+# 时间和日期处理
+python-dateutil==2.8.2
+
+# 配置管理
+python-dotenv==1.0.0
+
+# 日志处理
+loguru==0.7.2
+
+# 环境变量管理
+gunicorn==21.2.0
+
+# 开发工具
+pytest==7.4.2
+pytest-flask==1.2.0
+
+# 数据处理
+pandas==2.1.1
+openpyxl==3.1.2
+
+# 定时任务
+APScheduler==3.10.4
+
+# 缓存
+redis==5.0.1

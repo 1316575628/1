@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}班次管理 - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="fw-bold text-primary">
+                <i class="bi bi-clock me-2"></i>班次管理
+            </h2>
+            <p class="text-muted">管理班次类型和配置</p>
+        </div>
+        <div class="col-auto">
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('shift.create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i>创建班次
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Shift Types Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold text-primary">
+                    <i class="bi bi-table me-2"></i>班次类型列表
+                </h5>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshTable()">
+                        <i class="bi bi-arrow-clockwise me-1"></i>刷新
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="shifts-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 80px;">颜色</th>
+                            <th style="width: 120px;">班次名称</th>
+                            <th style="width: 150px;">时间</th>
+                            <th>描述</th>
+                            <th style="width: 100px;">状态</th>
+                            {% if current_user.is_admin %}
+                            <th style="width: 120px;">操作</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody id="shifts-tbody">
+                        <tr>
+                            <td colspan="{{ '6' if current_user.is_admin else '5' }}" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">加载中...</span>
+                                </div>
+                                <p class="mt-2 text-muted">加载中...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadShifts();
+});
+
+// 加载班次列表
+async function loadShifts() {
+    try {
+        const response = await Utils.request('/api/shift-types');
+        
+        if (response.success) {
+            renderShifts(response.data);
+        } else {
+            Utils.showErrorToast(response.message || '加载班次列表失败');
+        }
+    } catch (error) {
+        console.error('加载班次列表失败:', error);
+        Utils.showErrorToast('加载班次列表失败');
+    }
+}
+
+// 渲染班次列表
+function renderShifts(shifts) {
+    const tbody = document.getElementById('shifts-tbody');
+    
+    if (shifts.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="{{ '6' if current_user.is_admin else '5' }}" class="text-center py-4">
+                    <i class="bi bi-clock text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-3">暂无班次类型</p>
+                    {% if current_user.is_admin %}
+                    <a href="{{ url_for('shift.create') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>创建班次
+                    </a>
+                    {% endif %}
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = shifts.map(shift => `
+        <tr class="fade-in">
+            <td>
+                <div class="color-preview" style="
+                    width: 30px; 
+                    height: 30px; 
+                    background-color: ${shift.color}; 
+                    border-radius: 50%; 
+                    border: 2px solid #dee2e6;
+                    margin: 0 auto;
+                "></div>
+            </td>
+            <td>
+                <span class="fw-semibold">${shift.name}</span>
+            </td>
+            <td>
+                <i class="bi bi-clock me-1"></i>
+                ${shift.start_time} - ${shift.end_time}
+            </td>
+            <td class="small text-muted">
+                ${shift.description || '-'}
+            </td>
+            <td>
+                <span class="badge bg-${shift.is_active ? 'success' : 'secondary'}">
+                    ${shift.is_active ? '启用' : '禁用'}
+                </span>
+            </td>
+            {% if current_user.is_admin %}
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <a href="/shift/${shift.id}/edit" class="btn btn-outline-primary btn-sm" title="编辑">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <button type="button" class="btn btn-outline-danger btn-sm" 
+                            onclick="deleteShift(${shift.id})" title="删除">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </td>
+            {% endif %}
+        </tr>
+    `).join('');
+}
+
+// 删除班次
+function deleteShift(id) {
+    Utils.confirm('确定要删除这个班次类型吗？', function(confirmed) {
+        if (confirmed) {
+            fetch(`/shift/${id}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Utils.showSuccessToast('班次删除成功');
+                    loadShifts();
+                } else {
+                    Utils.showErrorToast(data.message || '删除班次失败');
+                }
+            })
+            .catch(error => {
+                console.error('删除班次失败:', error);
+                Utils.showErrorToast('删除班次失败');
+            });
+        }
+    });
+}
+
+// 刷新表格
+function refreshTable() {
+    loadShifts();
+    Utils.showSuccessToast('表格已刷新');
+}
+</script>
+{% endblock %}

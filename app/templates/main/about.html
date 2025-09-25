@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}关于系统 - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="fw-bold text-primary">
+                <i class="bi bi-info-circle me-2"></i>关于系统
+            </h2>
+            <p class="text-muted">了解钉钉打卡提醒系统的功能和特性</p>
+        </div>
+    </div>
+    
+    <!-- System Info -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 fw-bold text-primary">
+                        <i class="bi bi-app-indicator me-2"></i>系统信息
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-semibold">系统名称：</td>
+                                    <td>{{ config.get('APP_NAME', '钉钉打卡提醒系统') }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">版本号：</td>
+                                    <td>v{{ version }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">开发语言：</td>
+                                    <td>Python 3.11</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">Web框架：</td>
+                                    <td>Flask 2.3.3</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-semibold">数据库：</td>
+                                    <td>SQLite 3</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">前端框架：</td>
+                                    <td>Bootstrap 5</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">部署方式：</td>
+                                    <td>Docker / 原生部署</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">许可证：</td>
+                                    <td>MIT License</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Features -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 fw-bold text-primary">
+                        <i class="bi bi-star me-2"></i>主要功能
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="feature-item mb-3">
+                                <i class="bi bi-people-fill text-primary me-2"></i>
+                                <strong>用户认证系统</strong>
+                                <p class="text-muted small mb-0 mt-1">支持多用户登录，权限管理，密码加密存储</p>
+                            </div>
+                            <div class="feature-item mb-3">
+                                <i class="bi bi-calendar3 text-success me-2"></i>
+                                <strong>排班管理</strong>
+                                <p class="text-muted small mb-0 mt-1">可视化排班表，支持批量创建，日历视图</p>
+                            </div>
+                            <div class="feature-item mb-3">
+                                <i class="bi bi-clock text-info me-2"></i>
+                                <strong>班次配置</strong>
+                                <p class="text-muted small mb-0 mt-1">灵活的班次设置，自定义时间和显示颜色</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="feature-item mb-3">
+                                <i class="bi bi-bell-fill text-warning me-2"></i>
+                                <strong>定时提醒</strong>
+                                <p class="text-muted small mb-0 mt-1">根据排班自动发送上下班打卡提醒</p>
+                            </div>
+                            <div class="feature-item mb-3">
+                                <i class="bi bi-chat-dots-fill text-secondary me-2"></i>
+                                <strong>通知集成</strong>
+                                <p class="text-muted small mb-0 mt-1">支持钉钉和飞书双平台通知</p>
+                            </div>
+                            <div class="feature-item mb-3">
+                                <i class="bi bi-file-text text-dark me-2"></i>
+                                <strong>日志记录</strong>
+                                <p class="text-muted small mb-0 mt-1">完整的操作日志和考勤记录</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Technology Stack -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 fw-bold text-primary">
+                        <i class="bi bi-layers me-2"></i>技术栈
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-semibold text-primary">后端技术</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Flask - Web框架</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>SQLAlchemy - ORM框架</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>APScheduler - 定时任务</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>SQLite - 数据库</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-semibold text-primary">前端技术</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Bootstrap 5 - CSS框架</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>FullCalendar - 日历组件</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>DataTables - 表格组件</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>jQuery - JavaScript库</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 fw-bold text-primary">
+                        <i class="bi bi-rocket-takeoff me-2"></i>快速开始
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('main.index') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-speedometer2 me-2"></i>进入仪表板
+                        </a>
+                        <a href="{{ url_for('schedule.create') }}" class="btn btn-outline-success">
+                            <i class="bi bi-calendar-plus me-2"></i>创建排班
+                        </a>
+                        <a href="{{ url_for('shift.index') }}" class="btn btn-outline-info">
+                            <i class="bi bi-clock me-2"></i>管理班次
+                        </a>
+                        <a href="{{ url_for('main.calendar') }}" class="btn btn-outline-warning">
+                            <i class="bi bi-calendar-week me-2"></i>查看日历
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 fw-bold text-primary">
+                        <i class="bi bi-link-45deg me-2"></i>相关链接
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <i class="bi bi-github me-2"></i>
+                        <a href="https://github.com/yourusername/dingding-attendance-system" target="_blank" class="text-decoration-none">
+                            项目源码
+                        </a>
+                    </div>
+                    <div class="mb-2">
+                        <i class="bi bi-file-text me-2"></i>
+                        <a href="https://github.com/yourusername/dingding-attendance-system/blob/main/README.md" target="_blank" class="text-decoration-none">
+                            使用文档
+                        </a>
+                    </div>
+                    <div class="mb-2">
+                        <i class="bi bi-bug me-2"></i>
+                        <a href="https://github.com/yourusername/dingding-attendance-system/issues" target="_blank" class="text-decoration-none">
+                            问题反馈
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 fw-bold text-primary">
+                        <i class="bi bi-envelope me-2"></i>联系我们
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-2">
+                        如有问题或建议，欢迎通过以下方式联系我们：
+                    </p>
+                    <div class="mb-2">
+                        <i class="bi bi-envelope me-2"></i>
+                        <a href="mailto:your.email@example.com" class="text-decoration-none">
+                            your.email@example.com
+                        </a>
+                    </div>
+                    <div class="mb-2">
+                        <i class="bi bi-github me-2"></i>
+                        <a href="https://github.com/yourusername" target="_blank" class="text-decoration-none">
+                            GitHub Issues
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

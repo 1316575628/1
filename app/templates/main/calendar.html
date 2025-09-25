@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}排班日历 - {{ super() }}{% endblock %}
+
+{% block calendar_css %}
+<!-- FullCalendar CSS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="fw-bold text-primary">
+                <i class="bi bi-calendar-week me-2"></i>排班日历
+            </h2>
+            <p class="text-muted">查看和管理排班日历</p>
+        </div>
+        <div class="col-auto">
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-primary" onclick="exportCalendar()">
+                    <i class="bi bi-download me-1"></i>导出
+                </button>
+                <a href="{{ url_for('schedule.create') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>创建排班
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Calendar -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div id="calendar"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Event Detail Modal -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventModalLabel">排班详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="eventModalBody">
+                <!-- 事件详情内容 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="editEventBtn">编辑</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block calendar_js %}
+<!-- FullCalendar JS -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales/zh-cn.global.min.js"></script>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let calendar;
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initCalendar();
+});
+
+// 初始化日历
+function initCalendar() {
+    const calendarEl = document.getElementById('calendar');
+    
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'zh-cn',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        buttonText: {
+            today: '今天',
+            month: '月',
+            week: '周',
+            day: '日'
+        },
+        events: function(fetchInfo, successCallback, failureCallback) {
+            loadCalendarEvents(fetchInfo.start, fetchInfo.end, successCallback, failureCallback);
+        },
+        eventClick: function(info) {
+            showEventDetail(info.event);
+        },
+        eventMouseEnter: function(info) {
+            info.el.style.cursor = 'pointer';
+        },
+        dayMaxEvents: true,
+        height: 'auto',
+        firstDay: 1, // 周一为第一天
+        businessHours: {
+            daysOfWeek: [1, 2, 3, 4, 5],
+            startTime: '09:00',
+            endTime: '18:00'
+        }
+    });
+    
+    calendar.render();
+}
+
+// 加载日历事件
+async function loadCalendarEvents(start, end, successCallback, failureCallback) {
+    try {
+        const startStr = start.toISOString().split('T')[0];
+        const endStr = end.toISOString().split('T')[0];
+        
+        const response = await Utils.request(`/calendar-events?start=${startStr}&end=${endStr}`);
+        
+        if (response.success) {
+            successCallback(response.data);
+        } else {
+            failureCallback(response.message);
+        }
+    } catch (error) {
+        console.error('加载日历事件失败:', error);
+        failureCallback('加载日历事件失败');
+    }
+}
+
+// 显示事件详情
+function showEventDetail(event) {
+    const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+    const modalTitle = document.getElementById('eventModalLabel');
+    const modalBody = document.getElementById('eventModalBody');
+    const editBtn = document.getElementById('editEventBtn');
+    
+    // 设置标题
+    modalTitle.textContent = event.title;
+    
+    // 设置内容
+    const props = event.extendedProps;
+    let content = '';
+    
+    if (props.type === 'rest') {
+        content = `
+            <div class="mb-3">
+                <strong>类型：</strong><span class="badge bg-secondary">休息日</span>
+            </div>
+            <div class="mb-3">
+                <strong>用户：</strong>${props.user || '未知'}
+            </div>
+        `;
+    } else {
+        content = `
+            <div class="mb-3">
+                <strong>类型：</strong><span class="badge" style="background-color: ${event.backgroundColor};">${props.shift_name}</span>
+            </div>
+            <div class="mb-3">
+                <strong>用户：</strong>${props.user || '未知'}
+            </div>
+            <div class="mb-3">
+                <strong>时间：</strong>${props.start_time} - ${props.end_time}
+            </div>
+        `;
+    }
+    
+    if (props.note) {
+        content += `
+            <div class="mb-3">
+                <strong>备注：</strong>${props.note}
+            </div>
+        `;
+    }
+    
+    modalBody.innerHTML = content;
+    
+    // 设置编辑按钮
+    if (props.schedule_id) {
+        editBtn.onclick = function() {
+            window.location.href = `/schedule/${props.schedule_id}/edit`;
+        };
+        editBtn.style.display = 'block';
+    } else {
+        editBtn.style.display = 'none';
+    }
+    
+    modal.show();
+}
+
+// 导出日历
+function exportCalendar() {
+    Utils.showToast('导出功能开发中，敬请期待', 'info');
+}
+
+// 刷新日历
+function refreshCalendar() {
+    if (calendar) {
+        calendar.refetchEvents();
+        Utils.showSuccessToast('日历已刷新');
+    }
+}
+</script>
+{% endblock %}

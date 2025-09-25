@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}仪表板 - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="fw-bold text-primary">
+                <i class="bi bi-speedometer2 me-2"></i>仪表板
+            </h2>
+            <p class="text-muted">欢迎使用钉钉打卡提醒系统</p>
+        </div>
+        <div class="col-auto">
+            <div class="text-end">
+                <small class="text-muted">
+                    <i class="bi bi-calendar-date me-1"></i>
+                    {{ current_date.strftime('%Y年%m月%d日') }}
+                </small>
+                <br>
+                <small class="text-muted" id="current-time">
+                    <i class="bi bi-clock me-1"></i>
+                    --:--:--
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start border-primary border-4 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs fw-bold text-primary text-uppercase mb-1">活跃用户</div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">{{ total_users }}</div>
+                        </div>
+                        <div class="ms-3">
+                            <i class="bi bi-people-fill text-primary" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start border-success border-4 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs fw-bold text-success text-uppercase mb-1">班次类型</div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">{{ total_shifts }}</div>
+                        </div>
+                        <div class="ms-3">
+                            <i class="bi bi-clock-fill text-success" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start border-info border-4 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs fw-bold text-info text-uppercase mb-1">本月工作日</div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">{{ work_days }}</div>
+                        </div>
+                        <div class="ms-3">
+                            <i class="bi bi-calendar-check-fill text-info" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start border-warning border-4 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs fw-bold text-warning text-uppercase mb-1">本月休息日</div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">{{ rest_days }}</div>
+                        </div>
+                        <div class="ms-3">
+                            <i class="bi bi-calendar-x-fill text-warning" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content Row -->
+    <div class="row">
+        <!-- Today's Schedule -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold text-primary">
+                            <i class="bi bi-calendar-day me-2"></i>今日排班
+                        </h5>
+                        <a href="{{ url_for('schedule.today_schedule') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye me-1"></i>查看详情
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if today_schedules %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>用户</th>
+                                        <th>班次</th>
+                                        <th>时间</th>
+                                        <th>状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for schedule in today_schedules[:5] %}
+                                    <tr>
+                                        <td>
+                                            <i class="bi bi-person-circle me-2"></i>
+                                            {{ schedule.user.username }}
+                                        </td>
+                                        <td>
+                                            {% if schedule.is_rest_day %}
+                                                <span class="badge bg-secondary">休息</span>
+                                            {% else %}
+                                                <span class="badge" style="background-color: {{ schedule.shift_type.color }};">
+                                                    {{ schedule.shift_type.name }}
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if not schedule.is_rest_day and schedule.shift_type %}
+                                                {{ schedule.shift_type.start_time }} - {{ schedule.shift_type.end_time }}
+                                            {% else %}
+                                                <span class="text-muted">--:-- -- --:--</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if schedule.is_rest_day %}
+                                                <span class="badge bg-success">休息中</span>
+                                            {% else %}
+                                                <span class="badge bg-primary">工作中</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if today_schedules|length > 5 %}
+                        <div class="text-center mt-3">
+                            <small class="text-muted">
+                                还有 {{ today_schedules|length - 5 }} 条排班记录...
+                            </small>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-3">今日暂无排班安排</p>
+                            <a href="{{ url_for('schedule.create') }}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-1"></i>创建排班
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- System Status -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold text-primary">
+                        <i class="bi bi-activity me-2"></i>系统状态
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>提醒功能</span>
+                        <span class="badge bg-{{ 'success' if reminder_status else 'danger' }}">
+                            {{ '已启用' if reminder_status else '已禁用' }}
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>系统时间</span>
+                        <small class="text-muted" id="system-time">同步中...</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>数据库状态</span>
+                        <span class="badge bg-success">正常</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>系统版本</span>
+                        <small class="text-muted">v{{ config.get('APP_VERSION', '1.0.0') }}</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold text-primary">
+                        <i class="bi bi-lightning me-2"></i>快捷操作
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('schedule.create') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-plus-circle me-2"></i>创建排班
+                        </a>
+                        <a href="{{ url_for('main.calendar') }}" class="btn btn-outline-info">
+                            <i class="bi bi-calendar-week me-2"></i>查看日历
+                        </a>
+                        {% if current_user.is_admin %}
+                        <a href="{{ url_for('shift.create') }}" class="btn btn-outline-success">
+                            <i class="bi bi-clock me-2"></i>管理班次
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Logs -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold text-primary">
+                            <i class="bi bi-file-text me-2"></i>最近日志
+                        </h5>
+                        <a href="{{ url_for('logs.system_logs') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye me-1"></i>查看全部
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if recent_logs %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 150px;">时间</th>
+                                        <th style="width: 100px;">类型</th>
+                                        <th style="width: 80px;">级别</th>
+                                        <th>内容</th>
+                                        <th style="width: 120px;">用户</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in recent_logs[:8] %}
+                                    <tr>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ log.created_at.strftime('%m-%d %H:%M') }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ log.log_type }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ 'danger' if log.log_level == 'ERROR' else 'warning' if log.log_level == 'WARNING' else 'info' }}">
+                                                {{ log.log_level }}
+                                            </span>
+                                        </td>
+                                        <td class="small">{{ log.message[:100] }}{% if log.message|length > 100 %}...{% endif %}</td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ log.user.username if log.user else '系统' }}
+                                            </small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="bi bi-file-earmark-text text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2">暂无日志记录</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 更新当前时间
+function updateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('zh-CN');
+    document.getElementById('current-time').textContent = timeString;
+    document.getElementById('system-time').textContent = timeString;
+}
+
+// 页面加载时更新时间
+updateTime();
+setInterval(updateTime, 1000);
+
+// 加载仪表板数据
+function loadDashboardData() {
+    fetch('{{ url_for("main.dashboard_data") }}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 更新统计数据
+                console.log('仪表板数据已更新');
+            }
+        })
+        .catch(error => console.error('加载仪表板数据失败:', error));
+}
+
+// 每30秒更新一次数据
+setInterval(loadDashboardData, 30000);
+</script>
+{% endblock %}
