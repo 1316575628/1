@@ -195,7 +195,7 @@ gunicorn --bind 0.0.0.0:5000 --workers 4 run:app
 ```
 
 2. **使用Nginx反向代理**:
-```nginx
+``nginx
 server {
     listen 80;
     server_name your-domain.com;
@@ -208,6 +208,12 @@ server {
     }
 }
 ```
+
+### ARM64服务器部署
+
+本项目原生支持ARM64架构，可在树莓派、AWS Graviton等ARM64服务器上部署。
+
+详细部署指南请参考 [ARM64部署指南](DEPLOYMENT_ARM64.md)
 
 ## 开发指南
 
