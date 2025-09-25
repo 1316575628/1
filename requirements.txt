@@ -10,6 +10,7 @@ SQLAlchemy==2.0.21
 
 # 表单验证
 WTForms==3.0.1
+email_validator==2.0.0
 
 # 密码哈希
 Werkzeug==2.3.7

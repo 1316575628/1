@@ -4,7 +4,18 @@
 
 ### 1. Docker部署（推荐）
 
-#### 1.1 使用Docker Compose（最简单）
+#### 1.1 使用预构建镜像部署（最简单）
+
+```bash
+# 克隆项目
+git clone https://github.com/yourusername/dingding-attendance-system.git
+cd dingding-attendance-system
+
+# 使用预构建镜像一键部署
+./deploy-from-image.sh
+```
+
+#### 1.2 使用Docker Compose（传统方式）
 
 ```bash
 # 克隆项目
@@ -15,7 +26,7 @@ cd dingding-attendance-system
 ./docker-start.sh
 ```
 
-#### 1.2 手动Docker部署
+#### 1.3 手动Docker部署
 
 ```bash
 # 构建镜像
@@ -23,13 +34,13 @@ docker build -t dingding-attendance:latest .
 
 # 运行容器
 docker run -d \
-  --name dingding-attendance \
+  --name dingding \
   -p 5000:5000 \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/logs:/app/logs \
-  -e SECRET_KEY=your-secret-key-here \
-  -e API_TOKEN=your-api-token-here \
-  dingding-attendance:latest
+  -e SECRET_KEY=131657 \
+  -e API_TOKEN=131657 \
+  1316575628/1:latest
 ```
 
 ### 2. 原生部署
